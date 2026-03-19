@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<title>patternrecognition</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #0a0a0a; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; font-family: 'JetBrains Mono', monospace; color: #fff; }
+#wrapper { display: flex; gap: 16px; align-items: flex-start; }
+#container { position: relative; width: 640px; height: 480px; overflow: hidden; background: #111; flex-shrink: 0; }
+video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+#overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; transform: scaleX(-1); }
+#gesture-bar { position: absolute; bottom: 16px; left: 16px; font-size: 18px; font-weight: 500; color: #fff; background: rgba(0,0,0,0.45); backdrop-filter: blur(6px); padding: 8px 16px;  border: 0.5px solid rgba(255,255,255,0.12); opacity: 1; transition: opacity 0.15s; }
+#gesture-bar.visible { opacity: 1; }
+#panel { width: 220px; background: #111; border: 0.5px solid #1f1f1f; padding: 20px; display: flex; flex-direction: column; gap: 20px; }
+.section-title { font-size: 10px; font-weight: 500; color: #444; letter-spacing: 1.5px; text-transform: lowercase; margin-bottom: 10px; }
+.stat-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.stat-label { font-size: 12px; color: #555; }
+.stat-value { font-size: 12px; color: #ccc; font-weight: 500; }
+.tag { display: inline-block; font-size: 11px; background: #1a1a1a; color: #888; border: 0.5px solid #2a2a2a;  padding: 3px 8px; margin: 2px 2px 2px 0; }
+.gesture-item { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.gesture-dot { width: 6px; height: 6px; border-radius: 50%; background: #4ade80; flex-shrink: 0; }
+.gesture-name { font-size: 12px; color: #888; }
+.gesture-name.active { color: #4ade80; }
+#status { margin-top: 12px; font-size: 11px; color: #333; font-family: monospace; }
+</style>
+</head>
+<body>
+<div id="wrapper">
+  <div id="container">
+    <video id="video" autoplay playsinline muted></video>
+    <canvas id="overlay"></canvas>
+    <div id="gesture-bar">—</div>
+  </div>
+  <div id="panel">
+    <div>
+      <div class="section-title">live stats</div>
+      <div class="stat-row">
+        <span class="stat-label">FPS</span>
+        <span class="stat-value" id="fps">—</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">face landmarks</span>
+        <span class="stat-value">478</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">hand landmarks</span>
+        <span class="stat-value">21 x 2</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">total features</span>
+        <span class="stat-value">1,686</span>
+      </div>
+    </div>
+    <div>
+      <div class="section-title">gestures</div>
+      <div class="gesture-item"><div class="gesture-dot"></div><span class="gesture-name" id="g0">open hand</span></div>
+      <div class="gesture-item"><div class="gesture-dot"></div><span class="gesture-name" id="g1">no gesture</span></div>
+      <div class="gesture-item"><div class="gesture-dot"></div><span class="gesture-name" id="g2">closed hand</span></div>
+    </div>
+    
+    <div>
+      <div class="section-title">training accuracy</div>
+      <canvas id="train-chart" width="200" height="120" style="width:100%;"></canvas>
+      <div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap;">
+        <span style="font-size:10px;color:#4ade80;">&#9632; open hand</span>
+        <span style="font-size:10px;color:#60a5fa;">&#9632; no gesture</span>
+        <span style="font-size:10px;color:#f472b6;">&#9632; closed hand</span>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-title">tech stack</div>
+      <div>
+        <span class="tag">pytorch</span>
+        <span class="tag">mediapipe</span>
+        <span class="tag">onnx</span>
+        <span class="tag">opencv</span>
+        <span class="tag">javascript</span>
+        <span class="tag">python</span>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="status">initializing...</div>
+
+<script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
+<script type="module">
+const statusEl = document.getElementById("status");
+const video = document.getElementById("video");
+const canvas = document.getElementById("overlay");
+const ctx = canvas.getContext("2d");
+const gestureBar = document.getElementById("gesture-bar");
+const fpsEl = document.getElementById("fps");
+const gestureEls = [
+  document.getElementById("g0"),
+  document.getElementById("g1"),
+  document.getElementById("g2"),
+];
+
+const GESTURE_NAMES = ["open hand", "no gesture", "closed hand"];
+const FACE_DIM = 478 * 3, HAND_DIM = 21 * 3, INPUT_DIM = FACE_DIM + HAND_DIM * 2;
+
+const { HandLandmarker, FaceLandmarker, FilesetResolver, DrawingUtils } = await import(
+  "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/vision_bundle.mjs"
+);
+const vision = await FilesetResolver.forVisionTasks(
+  "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm"
+);
+
+statusEl.textContent = "loading mediapipe...";
+const handLandmarker = await HandLandmarker.createFromOptions(vision, {
+  baseOptions: { modelAssetPath: "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/latest/hand_landmarker.task", delegate: "GPU" },
+  runningMode: "VIDEO", numHands: 2
+});
+const faceLandmarker = await FaceLandmarker.createFromOptions(vision, {
+  baseOptions: { modelAssetPath: "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/latest/face_landmarker.task", delegate: "GPU" },
+  runningMode: "VIDEO", numFaces: 1
+});
+
+statusEl.textContent = "loading model...";
+const session = await ort.InferenceSession.create("gesture_model.onnx");
+
+statusEl.textContent = "starting webcam...";
+const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } });
+video.srcObject = stream;
+await new Promise(r => video.onloadedmetadata = r);
+canvas.width = video.videoWidth;
+canvas.height = video.videoHeight;
+
+const drawingUtils = new DrawingUtils(ctx);
+statusEl.textContent = "rlly buggy";
+
+let lastTime = performance.now();
+let frameCount = 0;
+
+async function loop() {
+  const now = performance.now();
+  frameCount++;
+  if (now - lastTime > 500) {
+    fpsEl.textContent = Math.round(frameCount / ((now - lastTime) / 1000));
+    frameCount = 0;
+    lastTime = now;
+  }
+
+  const handResult = handLandmarker.detectForVideo(video, now);
+  const faceResult = faceLandmarker.detectForVideo(video, now);
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.save();
+  ctx.translate(canvas.width, 0);
+  ctx.scale(-1, 1);
+  if (faceResult.faceLandmarks) {
+    for (const lm of faceResult.faceLandmarks) {
+      const keyPoints = [1, 33, 263, 61, 291, 199, 168, 4, 94];
+      keyPoints.forEach(i => {
+        const p = lm[i];
+        const x = (1 - p.x) * canvas.width;
+        const y = p.y * canvas.height;
+        ctx.beginPath();
+        ctx.arc(x, y, 3, 0, Math.PI * 2);
+        ctx.fillStyle = "#4ade80";
+        ctx.fill();
+      });
+    }
+  }
+  if (handResult.landmarks) {
+    for (const lm of handResult.landmarks) {
+      drawingUtils.drawConnectors(lm, HandLandmarker.HAND_CONNECTIONS, { color: "#4ade80", lineWidth: 2 });
+      drawingUtils.drawLandmarks(lm, { color: "#fff", radius: 3 });
+    }
+  }
+  ctx.restore();
+
+  const features = new Float32Array(INPUT_DIM);
+  if (faceResult.faceLandmarks?.[0])
+    faceResult.faceLandmarks[0].forEach((p, i) => {
+      features[i*3] = p.x; features[i*3+1] = p.y; features[i*3+2] = p.z;
+    });
+  if (handResult.landmarks)
+    handResult.landmarks.slice(0, 2).forEach((hand, hi) =>
+      hand.forEach((p, i) => {
+        const off = FACE_DIM + hi * HAND_DIM;
+        features[off+i*3] = p.x; features[off+i*3+1] = p.y; features[off+i*3+2] = p.z;
+      }));
+
+  const tensor = new ort.Tensor("float32", features, [1, INPUT_DIM]);
+  const results = await session.run({ features: tensor });
+  const logits = Array.from(results.logits.data);
+  const expL = logits.map(Math.exp), sum = expL.reduce((a,b) => a+b, 0);
+  const probs = expL.map(v => v/sum);
+  const classIdx = probs.indexOf(Math.max(...probs));
+  const name = GESTURE_NAMES[classIdx];
+
+  gestureEls.forEach((el, i) => el.classList.toggle("active", i === classIdx && probs[classIdx] > 0.7));
+
+  gestureBar.textContent = name;
+  if (true) {
+    
+  } else {
+    
+  }
+
+  requestAnimationFrame(loop);
+}
+loop();
+
+// Training chart
+const trainLog = {"epochs": [{"epoch": 10, "overall": 96.3, "per_class": [96.0, 100.0, 93.0]}, {"epoch": 20, "overall": 86.4, "per_class": [96.4, 64.6, 97.7]}, {"epoch": 30, "overall": 87.4, "per_class": [99.3, 64.6, 97.7]}, {"epoch": 40, "overall": 87.9, "per_class": [99.9, 65.5, 97.7]}, {"epoch": 50, "overall": 95.0, "per_class": [100.0, 88.0, 96.9]}, {"epoch": 60, "overall": 98.6, "per_class": [100.0, 100.0, 95.7]}, {"epoch": 70, "overall": 98.6, "per_class": [100.0, 100.0, 95.7]}, {"epoch": 80, "overall": 98.6, "per_class": [100.0, 100.0, 95.7]}, {"epoch": 90, "overall": 98.6, "per_class": [100.0, 100.0, 95.7]}, {"epoch": 100, "overall": 97.0, "per_class": [99.9, 100.0, 91.1]}, {"epoch": 110, "overall": 98.5, "per_class": [100.0, 100.0, 95.5]}, {"epoch": 120, "overall": 98.5, "per_class": [100.0, 100.0, 95.4]}, {"epoch": 130, "overall": 98.8, "per_class": [100.0, 100.0, 96.2]}, {"epoch": 140, "overall": 98.7, "per_class": [100.0, 100.0, 96.0]}, {"epoch": 150, "overall": 98.8, "per_class": [100.0, 100.0, 96.3]}], "gestures": ["open_hand", "no_gesture", "closed_hand"]};
+const chartCanvas = document.getElementById("train-chart");
+const cctx = chartCanvas.getContext("2d");
+const epochs = trainLog.epochs.map(e => e.epoch);
+const colors = ["#4ade80", "#60a5fa", "#f472b6"];
+const CW = chartCanvas.width, CH = chartCanvas.height;
+const PAD = 16;
+
+cctx.fillStyle = "#0a0a0a";
+cctx.fillRect(0, 0, CW, CH);
+
+// Grid lines
+for (let i = 0; i <= 4; i++) {
+  const y = PAD + (CH - PAD * 2) * (1 - i / 4);
+  cctx.strokeStyle = "#1f1f1f";
+  cctx.lineWidth = 0.5;
+  cctx.beginPath();
+  cctx.moveTo(PAD, y);
+  cctx.lineTo(CW - PAD, y);
+  cctx.stroke();
+  cctx.fillStyle = "#333";
+  cctx.font = "8px JetBrains Mono, monospace";
+  cctx.fillText((i * 25) + "%", 0, y + 3);
+}
+
+// Lines per gesture
+trainLog.gestures.forEach((g, gi) => {
+  cctx.strokeStyle = colors[gi];
+  cctx.lineWidth = 1.5;
+  cctx.beginPath();
+  trainLog.epochs.forEach((e, i) => {
+    const x = PAD + (i / (trainLog.epochs.length - 1)) * (CW - PAD * 2);
+    const y = PAD + (CH - PAD * 2) * (1 - e.per_class[gi] / 100);
+    i === 0 ? cctx.moveTo(x, y) : cctx.lineTo(x, y);
+  });
+  cctx.stroke();
+});
+
+</script>
+</body>
+</html>
