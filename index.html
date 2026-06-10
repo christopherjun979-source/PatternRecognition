@@ -177,6 +177,7 @@ async function loop() {
       const keyPoints = [1, 33, 263, 61, 291, 199, 168, 4, 94];
       keyPoints.forEach(i => {
         const p = lm[i];
+        // Standard mapping coordinates; CSS horizontal inversion aligns the tracking points automatically
         const x = p.x * canvas.width;
         const y = p.y * canvas.height;
         ctx.beginPath();
@@ -187,9 +188,10 @@ async function loop() {
     }
   }
   
-  // Hand Skeleton
+  // Hand Skeleton rendering
   if (handResult.landmarks) {
     for (const lm of handResult.landmarks) {
+      // Use original positions directly since the canvas layout tracks the mirrored view window
       drawingUtils.drawConnectors(lm, HandLandmarker.HAND_CONNECTIONS, { color: "#4ade80", lineWidth: 2 });
       drawingUtils.drawLandmarks(lm, { color: "#fff", radius: 3 });
     }
