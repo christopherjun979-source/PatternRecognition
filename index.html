@@ -187,7 +187,7 @@ async function loop() {
     }
   }
   
-  // Hand Skeleton thing
+  // Hand Skeleton
   if (handResult.landmarks) {
     for (const lm of handResult.landmarks) {
       drawingUtils.drawConnectors(lm, HandLandmarker.HAND_CONNECTIONS, { color: "#4ade80", lineWidth: 2 });
@@ -217,7 +217,7 @@ async function loop() {
     });
   }
 
-  // ONNX execution
+  // ONNX 
   const tensor = new ort.Tensor("float32", features, [1, INPUT_DIM]);
   const results = await session.run({ features: tensor });
   const logits = Array.from(results.logits.data);
