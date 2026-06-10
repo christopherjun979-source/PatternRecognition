@@ -3,27 +3,27 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
   <title>Real-time Pattern Recognition</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { background: #0a0a0a; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; font-family: 'JetBrains Mono', monospace; color: #fff; }
+    body { background: #0a0a0a; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; font-family: 'Geist Mono', monospace; color: #fff; letter-spacing: -0.2px; }
     #wrapper { display: flex; gap: 16px; align-items: flex-start; }
     #container { position: relative; width: 640px; height: 480px; overflow: hidden; background: #111; flex-shrink: 0; border-radius: 8px; border: 1px solid #1f1f1f; }
     video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
     #overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; transform: scaleX(-1); }
-    #gesture-bar { position: absolute; bottom: 16px; left: 16px; font-size: 18px; font-weight: 500; color: #fff; background: rgba(0,0,0,0.65); backdrop-filter: blur(6px); padding: 8px 16px; border: 0.5px solid rgba(255,255,255,0.12); border-radius: 4px; }
+    #gesture-bar { position: absolute; bottom: 16px; left: 16px; font-size: 16px; font-weight: 600; color: #fff; background: rgba(0,0,0,0.65); backdrop-filter: blur(6px); padding: 8px 16px; border: 0.5px solid rgba(255,255,255,0.12); border-radius: 4px; text-transform: uppercase; }
     #panel { width: 240px; background: #111; border: 0.5px solid #1f1f1f; padding: 20px; display: flex; flex-direction: column; gap: 20px; border-radius: 8px; }
-    .section-title { font-size: 10px; font-weight: 500; color: #555; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 10px; }
+    .section-title { font-size: 10px; font-weight: 600; color: #555; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 10px; }
     .stat-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-    .stat-label { font-size: 12px; color: #666; }
-    .stat-value { font-size: 12px; color: #ccc; font-weight: 500; }
-    .tag { display: inline-block; font-size: 11px; background: #1a1a1a; color: #888; border: 0.5px solid #2a2a2a; padding: 3px 8px; margin: 2px 2px 2px 0; border-radius: 4px; }
-    .gesture-item { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+    .stat-label { font-size: 12px; color: #777; font-weight: 400; }
+    .stat-value { font-size: 12px; color: #eee; font-weight: 500; }
+    .tag { display: inline-block; font-size: 10px; font-weight: 500; background: #1a1a1a; color: #999; border: 0.5px solid #2a2a2a; padding: 3px 8px; margin: 2px 2px 2px 0; border-radius: 4px; }
+    .gesture-item { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
     .gesture-dot { width: 6px; height: 6px; border-radius: 50%; background: #2a2a2a; flex-shrink: 0; transition: background 0.2s; }
-    .gesture-name { font-size: 12px; color: #555; transition: color 0.2s; }
-    .gesture-name.active { color: #4ade80; }
-    #status { margin-top: 12px; font-size: 11px; color: #444; font-family: monospace; }
+    .gesture-name { font-size: 12px; color: #444; font-weight: 400; transition: color 0.2s; }
+    .gesture-name.active { color: #4ade80; font-weight: 500; }
+    #status { margin-top: 12px; font-size: 11px; color: #555; font-weight: 400; }
   </style>
 </head>
 <body>
@@ -64,9 +64,9 @@
       <div class="section-title">Training History</div>
       <canvas id="train-chart" width="200" height="120" style="width:100%;"></canvas>
       <div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap;">
-        <span style="font-size:10px;color:#4ade80;">&#9632; Open</span>
-        <span style="font-size:10px;color:#60a5fa;">&#9632; None</span>
-        <span style="font-size:10px;color:#f472b6;">&#9632; Closed</span>
+        <span style="font-size:10px;color:#4ade80;font-weight:400;">&#9632; Open</span>
+        <span style="font-size:10px;color:#60a5fa;font-weight:400;">&#9632; None</span>
+        <span style="font-size:10px;color:#f472b6;font-weight:400;">&#9632; Closed</span>
       </div>
     </div>
 
@@ -177,7 +177,6 @@ async function loop() {
       const keyPoints = [1, 33, 263, 61, 291, 199, 168, 4, 94];
       keyPoints.forEach(i => {
         const p = lm[i];
-        // Standard mapping coordinates; CSS horizontal inversion aligns the tracking points automatically
         const x = p.x * canvas.width;
         const y = p.y * canvas.height;
         ctx.beginPath();
@@ -191,7 +190,6 @@ async function loop() {
   // Hand Skeleton rendering
   if (handResult.landmarks) {
     for (const lm of handResult.landmarks) {
-      // Use original positions directly since the canvas layout tracks the mirrored view window
       drawingUtils.drawConnectors(lm, HandLandmarker.HAND_CONNECTIONS, { color: "#4ade80", lineWidth: 2 });
       drawingUtils.drawLandmarks(lm, { color: "#fff", radius: 3 });
     }
@@ -245,40 +243,4 @@ async function loop() {
 //loop
 loop();
 
-const trainLog = {"epochs": [{"epoch": 10, "overall": 96.3, "per_class": [96.0, 100.0, 93.0]}, {"epoch": 20, "overall": 86.4, "per_class": [96.4, 64.6, 97.7]}, {"epoch": 30, "overall": 87.4, "per_class": [99.3, 64.6, 97.7]}, {"epoch": 40, "overall": 87.9, "per_class": [99.9, 65.5, 97.7]}, {"epoch": 50, "overall": 95.0, "per_class": [100.0, 88.0, 96.9]}, {"epoch": 60, "overall": 98.6, "per_class": [100.0, 100.0, 95.7]}, {"epoch": 70, "overall": 98.6, "per_class": [100.0, 100.0, 95.7]}, {"epoch": 80, "overall": 98.6, "per_class": [100.0, 100.0, 95.7]}, {"epoch": 90, "overall": 98.6, "per_class": [100.0, 100.0, 95.7]}, {"epoch": 100, "overall": 97.0, "per_class": [99.9, 100.0, 91.1]}, {"epoch": 110, "overall": 98.5, "per_class": [100.0, 100.0, 95.5]}, {"epoch": 120, "overall": 98.5, "per_class": [100.0, 100.0, 95.4]}, {"epoch": 130, "overall": 98.8, "per_class": [100.0, 100.0, 96.2]}, {"epoch": 140, "overall": 98.7, "per_class": [100.0, 100.0, 96.0]}, {"epoch": 150, "overall": 98.8, "per_class": [100.0, 100.0, 96.3]}], "gestures": ["open_hand", "no_gesture", "closed_hand"]};
-const chartCanvas = document.getElementById("train-chart");
-const cctx = chartCanvas.getContext("2d");
-const CW = chartCanvas.width;
-const CH = chartCanvas.height;
-const PAD = 16;
-
-cctx.fillStyle = "#0a0a0a";
-cctx.fillRect(0, 0, CW, CH);
-
-for (let i = 0; i <= 4; i++) {
-  const y = PAD + (CH - PAD * 2) * (1 - i / 4);
-  cctx.strokeStyle = "#1f1f1f";
-  cctx.lineWidth = 0.5;
-  cctx.beginPath();
-  cctx.moveTo(PAD, y);
-  cctx.lineTo(CW - PAD, y);
-  cctx.stroke();
-  cctx.fillStyle = "#444";
-  cctx.font = "8px JetBrains Mono, monospace";
-  cctx.fillText((i * 25) + "%", 0, y + 3);
-}
-
-trainLog.gestures.forEach((g, gi) => {
-  cctx.strokeStyle = colors[gi];
-  cctx.lineWidth = 1.5;
-  cctx.beginPath();
-  trainLog.epochs.forEach((e, i) => {
-    const x = PAD + (i / (trainLog.epochs.length - 1)) * (CW - PAD * 2);
-    const y = PAD + (CH - PAD * 2) * (1 - e.per_class[gi] / 100);
-    i === 0 ? cctx.moveTo(x, y) : cctx.lineTo(x, y);
-  });
-  cctx.stroke();
-});
-</script>
-</body>
-</html>
+const trainLog = {"epochs": [{"epoch": 10, "overall": 96.3, "per_class": [96.0, 100.0, 93.0]}, {"epoch": 20, "overall": 86.4, "per_class": [96.4, 64.6, 97.7]}, {"epoch": 30, "overall": 87.4, "per_class": [99.3, 64.6, 97.7]}, {"epoch": 40, "overall": 87.9, "per_class": [99.9, 65.5, 97.7]}, {"epoch": 50, "overall": 95.0, "per_class": [100.0, 88.0, 96.9]}, {"epoch": 60, "overall": 98.6, "per_class": [100.0, 100.0, 95.7]}, {"epoch": 70, "overall": 98.6, "per_class": [100.0, 100.0, 95.7]}, {"epoch": 80, "overall": 98.6, "per_class": [100.0, 100.0, 95.7]}, {"epoch": 90, "overall": 98.6, "per_class": [100.0, 100.0, 95.7]}, {"epoch": 100, "overall": 97.0, "per_class":
