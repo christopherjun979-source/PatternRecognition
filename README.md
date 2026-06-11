@@ -1,6 +1,11 @@
-# Real-Time Gesture Recognition
+# Real-Time Gesture/Pattern Recognition
 
-A web dashboard that uses your webcam to recognize hand gestures in real time. It extracts face and hand tracking points using MediaPipe and runs them through a custom PyTorch AI model optimized with the ONNX Runtime to make predictions directly in your browser.
+A web dashboard that uses your webcam to recognize hand gestures in real time. 
+* Open Hand
+* Close Hand
+* No Gesture
+
+It extracts face and hand tracking points using MediaPipe and runs them through a custom PyTorch AI model optimized with the ONNX Runtime to make predictions directly in your browser.
 
 ## Live Demo
 **https://christopherjun979-source.github.io/PatternRecognition/**
