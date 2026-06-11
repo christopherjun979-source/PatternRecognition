@@ -240,7 +240,64 @@ async function loop() {
   requestAnimationFrame(loop);
 }
   
-//loop
+// Run loop
 loop();
 
-const trainLog = {"epochs": [{"epoch": 10, "overall": 96.3, "per_class": [96.0, 100.0, 93.0]}, {"epoch": 20, "overall": 86.4, "per_class": [96.4, 64.6, 97.7]}, {"epoch": 30, "overall": 87.4, "per_class": [99.3, 64.6, 97.7]}, {"epoch": 40, "overall": 87.9, "per_class": [99.9, 65.5, 97.7]}, {"epoch": 50, "overall": 95.0, "per_class": [100.0, 88.0, 96.9]}, {"epoch": 60, "overall": 98.6, "per_class": [100.0, 100.0, 95.7]}, {"epoch": 70, "overall": 98.6, "per_class": [100.0, 100.0, 95.7]}, {"epoch": 80, "overall": 98.6, "per_class": [100.0, 100.0, 95.7]}, {"epoch": 90, "overall": 98.6, "per_class": [100.0, 100.0, 95.7]}, {"epoch": 100, "overall": 97.0, "per_class":
+// Consolidated training configuration object
+const trainLog = {
+  "epochs": [
+    {"epoch": 10, "overall": 48.5, "per_class": [99.2, 40.2, 3.3]}, 
+    {"epoch": 20, "overall": 95.1, "per_class": [99.9, 87.7, 97.4]}, 
+    {"epoch": 30, "overall": 99.7, "per_class": [100.0, 99.9, 99.2]}, 
+    {"epoch": 40, "overall": 100.0, "per_class": [100.0, 100.0, 99.9]}, 
+    {"epoch": 50, "overall": 100.0, "per_class": [100.0, 100.0, 99.9]}, 
+    {"epoch": 60, "overall": 100.0, "per_class": [100.0, 100.0, 100.0]}, 
+    {"epoch": 70, "overall": 100.0, "per_class": [100.0, 100.0, 100.0]}, 
+    {"epoch": 80, "overall": 100.0, "per_class": [100.0, 100.0, 100.0]}, 
+    {"epoch": 90, "overall": 100.0, "per_class": [100.0, 100.0, 100.0]}, 
+    {"epoch": 100, "overall": 100.0, "per_class": [100.0, 100.0, 100.0]}, 
+    {"epoch": 110, "overall": 100.0, "per_class": [100.0, 100.0, 100.0]}, 
+    {"epoch": 120, "overall": 100.0, "per_class": [100.0, 100.0, 100.0]}, 
+    {"epoch": 130, "overall": 100.0, "per_class": [100.0, 100.0, 100.0]}, 
+    {"epoch": 140, "overall": 100.0, "per_class": [100.0, 100.0, 100.0]}, 
+    {"epoch": 150, "overall": 100.0, "per_class": [100.0, 100.0, 100.0]}
+  ], 
+  "gestures": ["open_hand", "no_gesture", "closed_hand"]
+};
+
+const chartCanvas = document.getElementById("train-chart");
+const cctx = chartCanvas.getContext("2d");
+const CW = chartCanvas.width;
+const CH = chartCanvas.height;
+const PAD = 16;
+
+cctx.fillStyle = "#0a0a0a";
+cctx.fillRect(0, 0, CW, CH);
+
+for (let i = 0; i <= 4; i++) {
+  const y = PAD + (CH - PAD * 2) * (1 - i / 4);
+  cctx.strokeStyle = "#1f1f1f";
+  cctx.lineWidth = 0.5;
+  cctx.beginPath();
+  cctx.moveTo(PAD, y);
+  cctx.lineTo(CW - PAD, y);
+  cctx.stroke();
+  cctx.fillStyle = "#444";
+  cctx.font = "8px 'Geist Mono', monospace";
+  cctx.fillText((i * 25) + "%", 0, y + 3);
+}
+
+trainLog.gestures.forEach((g, gi) => {
+  cctx.strokeStyle = colors[gi];
+  cctx.lineWidth = 1.5;
+  cctx.beginPath();
+  trainLog.epochs.forEach((e, i) => {
+    const x = PAD + (i / (trainLog.epochs.length - 1)) * (CW - PAD * 2);
+    const y = PAD + (CH - PAD * 2) * (1 - e.per_class[gi] / 100);
+    i === 0 ? cctx.moveTo(x, y) : cctx.lineTo(x, y);
+  });
+  cctx.stroke();
+});
+</script>
+</body>
+</html>
