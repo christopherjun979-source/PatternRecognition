@@ -4,8 +4,7 @@ A clean web dashboard that uses your webcam to recognize hand gestures in real t
 
 ## Live Demo
 Try the dashboard directly in your browser:
-**https://[YOUR-GITHUB-USERNAME].github.io/[YOUR-REPO-NAME]/**
-*(Make sure to change the placeholder above to your actual GitHub Pages URL!)*
+**[https://[YOUR-GITHUB-USERNAME].github.io/[YOUR-REPO-NAME]/](https://christopherjun979-source.github.io/PatternRecognition/)**
 
 ## What was used
 - **AI Framework:** PyTorch (Model Training)
