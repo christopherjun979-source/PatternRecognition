@@ -15,3 +15,5 @@ A clean web dashboard that uses your webcam to recognize hand gestures in real t
 - `training_log.json` — Saved accuracy details parsed by the history chart.
 - `collect_data.py` — Script to gather and save custom hand coordinate datasets.
 - `train.py` — PyTorch script to train your neural network and export to ONNX.
+
+##Note that this is not accurate all the time, and will be updated in the future to increase the precision and accuracy
