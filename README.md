@@ -2,7 +2,12 @@
 
 A clean web dashboard that uses your webcam to recognize hand gestures in real time. It extracts face and hand tracking points using MediaPipe and runs them through a custom PyTorch AI model optimized with ONNX Runtime to make instant predictions directly inside your browser.
 
-## Tech Stack
+## Live Demo
+Try the dashboard directly in your browser:
+**https://[YOUR-GITHUB-USERNAME].github.io/[YOUR-REPO-NAME]/**
+*(Make sure to change the placeholder above to your actual GitHub Pages URL!)*
+
+## What was used
 - **AI Framework:** PyTorch (Model Training)
 - **Computer Vision:** Google MediaPipe (Face & Hand Tracking)
 - **Web Engine:** ONNX Runtime Web (Fast Web AI Inference)
@@ -16,4 +21,5 @@ A clean web dashboard that uses your webcam to recognize hand gestures in real t
 - `collect_data.py` — Script to gather and save custom hand coordinate datasets.
 - `train.py` — PyTorch script to train your neural network and export to ONNX.
 
-## Note that this is not accurate all the time and will be updated in the future.
+---
+*Note: This project is a work-in-progress, may not be 100% accurate at all times, and will be continuously updated in the future.*
