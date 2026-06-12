@@ -18,11 +18,11 @@ It extracts face and hand tracking points using MediaPipe and runs them through 
 - **Typography:** Geist Mono (Vercel)
 
 ## Project File
-- `index.html` — The frontend dashboard, UI, and live camera tracking system.
-- `gesture_model.onnx` — Your trained AI model weights ready for browser use.
-- `training_log.json` — Saved accuracy details parsed by the history chart.
-- `collect_data.py` — Script to gather and save custom hand coordinate datasets.
-- `train.py` — PyTorch script to train your neural network and export to ONNX.
+- `index.html` The frontend dashboard, UI, and live camera tracking system.
+- `gesture_model.onnx` The trained AI model is ready for browser use.
+- `training_log.json` Saved accuracy details parsed by the history chart.
+- `collect_data.py` Script to gather and save custom hand coordinate datasets.
+- `train.py` PyTorch script to train your neural network and export to ONNX.
 
 ---
 *Note: This project is a work-in-progress, may not be 100% accurate at all times, and will be updated in the future.*
